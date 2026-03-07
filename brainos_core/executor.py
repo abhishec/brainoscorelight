@@ -1,10 +1,14 @@
-"""ClaudeExecutor — thin, budget-aware wrapper around the Anthropic API.
+"""ClaudeExecutor — smart, budget-aware Claude API wrapper.
 
-Innovations extracted from agent-purple + agent-finance:
-- Automatic model switching: Sonnet by default, Haiku at >80% token budget
-- Structured output parsing (JSON extraction from raw text)
-- Retry logic for transient errors
-- Token counting without a full API round-trip
+ALL LLM calls in BrainOS agents go through this executor.
+The model is never hardcoded at the call site — it is selected upstream by
+DAAO (difficulty-aware routing) and passed in explicitly.
+
+Features:
+- Explicit model override: every call accepts the DAAO-selected model
+- Budget-aware fallback: switches to fast model at >80% token budget
+- Retry on transient errors (rate limit, 5xx)
+- JSON extraction from raw response text
 """
 from __future__ import annotations
 
@@ -36,11 +40,16 @@ class TokenBudget:
 
 
 class ClaudeExecutor:
-    """Stateless Claude caller with model switching + structured output.
+    """Smart Claude caller: model is set by DAAO upstream, never hardcoded here.
 
-    Usage:
-        executor = ClaudeExecutor(api_key="sk-ant-...")
-        answer = await executor.call(system="...", user="...", max_tokens=256)
+    Usage::
+
+        daao = DAAO(fast_model=FAST_MODEL, main_model=MAIN_MODEL)
+        executor = ClaudeExecutor(api_key=..., default_model=MAIN_MODEL, fast_model=FAST_MODEL)
+
+        # DAAO selects model — executor just executes
+        model = daao.route(task_text)
+        answer = await executor.call(system="...", user="...", model=model)
     """
 
     DEFAULT_MODEL = "claude-sonnet-4-6"
@@ -63,19 +72,28 @@ class ClaudeExecutor:
         max_tokens: int = 512,
         budget: TokenBudget | None = None,
         force_fast: bool = False,
+        model: str | None = None,
     ) -> str:
-        """Call Claude, return response text.
+        """Call Claude and return response text.
+
+        Model selection priority (highest wins):
+        1. force_fast=True → always use fast model
+        2. budget.tight    → switch to fast model (budget pressure)
+        3. model param     → explicit model from DAAO
+        4. self.default_model → fallback default
 
         Args:
-            system: System prompt
-            user: User message
+            system:     System prompt
+            user:       User message
             max_tokens: Max tokens in response
-            budget: If provided, switches to fast model when budget is tight
-            force_fast: Always use the fast (Haiku) model
+            budget:     If provided, switches to fast model when budget is tight
+            force_fast: Always use the fast (Haiku) model regardless of model param
+            model:      Explicit model ID from DAAO — the preferred way to set model
         """
-        model = self.default_model
+        # Resolve model: explicit > default, then override if fast conditions met
+        resolved = model or self.default_model
         if force_fast or (budget and budget.tight):
-            model = self.fast_model
+            resolved = self.fast_model
 
         if budget:
             budget.consume(system + user)
@@ -83,7 +101,7 @@ class ClaudeExecutor:
         for attempt in range(3):
             try:
                 resp = await self._client.messages.create(
-                    model=model,
+                    model=resolved,
                     max_tokens=max_tokens,
                     system=system,
                     messages=[{"role": "user", "content": user}],
@@ -107,15 +125,18 @@ class ClaudeExecutor:
         user: str,
         max_tokens: int = 1024,
         budget: TokenBudget | None = None,
+        model: str | None = None,
     ) -> dict:
-        """Call Claude and parse JSON from the response."""
-        text = await self.call(system, user, max_tokens=max_tokens, budget=budget)
-        # Try raw parse first
+        """Call Claude and parse JSON from the response.
+
+        Args:
+            model: Explicit model ID from DAAO (same as call())
+        """
+        text = await self.call(system, user, max_tokens=max_tokens, budget=budget, model=model)
         try:
             return json.loads(text)
         except json.JSONDecodeError:
             pass
-        # Extract first {...} or [...] block
         m = re.search(r'(\{.*\}|\[.*\])', text, re.DOTALL)
         if m:
             return json.loads(m.group())
