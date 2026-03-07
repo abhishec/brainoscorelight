@@ -24,5 +24,8 @@ dev = ["pytest", "pytest-asyncio", "ruff"]
 Homepage = "https://github.com/abhishec/brainoscorelight"
 Repository = "https://github.com/abhishec/brainoscorelight"
 
+[tool.hatch.build.targets.wheel]
+packages = ["brainos_core"]
+
 [tool.ruff.lint]
 select = ["E", "F", "I"]
