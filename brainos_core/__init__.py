@@ -5,8 +5,11 @@ Each module solves exactly one problem, has zero hidden state,
 and can be imported independently.
 
 Core layers:
-    Brain  — 5-layer file-based memory (working/episodic/semantic/strategic/meta)
-    Router — zero-LLM orchestrator: UCB1 strategy selection + reward attribution
+    Brain     — 5-layer file-based memory (working/episodic/semantic/strategic/meta)
+    Router    — zero-LLM orchestrator: UCB1 strategy selection + reward attribution
+    DAAO      — zero-LLM model router: Haiku for simple tasks, Sonnet for complex
+    Contracts — deterministic completion guarantees (checkout, citation, depth)
+    Hints     — prefix-based sequence hints + recovery cascade
     BrainOSWorker — abstract base wiring all primitives into a single handle()
 """
 from .executor import ClaudeExecutor
@@ -18,6 +21,9 @@ from .privacy import PrivacyGuard
 from .brain import Brain, WorkingMemory, EpisodicMemory, SemanticMemory, StrategicMemory, MetaMemory
 from .router import Router, compute_reward
 from .worker import BrainOSWorker
+from .daao import DAAO
+from .contracts import CheckoutContract, CitationContract, DepthContract, MutationContract
+from .hints import SequenceHints, RecoveryCascade
 
 __all__ = [
     # Core orchestration
@@ -38,5 +44,15 @@ __all__ = [
     "RLPrimer",
     "PrivacyGuard",
     "detect_task_format",
+    # Smart routing
+    "DAAO",
+    # Completion contracts
+    "CheckoutContract",
+    "CitationContract",
+    "DepthContract",
+    "MutationContract",
+    # Sequence hints + recovery
+    "SequenceHints",
+    "RecoveryCascade",
 ]
-__version__ = "0.2.0"
+__version__ = "0.3.0"
