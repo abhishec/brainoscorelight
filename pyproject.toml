@@ -1,0 +1,28 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "brainos-core-light"
+version = "0.1.0"
+description = "BrainOS Core Light — shared AI worker primitives for AgentBeats benchmark agents"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+keywords = ["ai", "agents", "llm", "mcp", "a2a", "benchmark"]
+dependencies = [
+    "anthropic>=0.49.0",
+    "httpx>=0.27.0",
+    "fastapi>=0.111.0",
+    "uvicorn>=0.30.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest", "pytest-asyncio", "ruff"]
+
+[project.urls]
+Homepage = "https://github.com/abhishec/brainoscorelight"
+Repository = "https://github.com/abhishec/brainoscorelight"
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
