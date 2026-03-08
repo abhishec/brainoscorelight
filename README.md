@@ -13,7 +13,7 @@ sequence hints, RL loop. Build a production benchmark agent in ~40 lines.
 | Agent | Benchmark | Score | Status |
 |-------|-----------|-------|--------|
 | [purple-agent-business-process-worker](https://github.com/abhishec/purple-agent-business-process-worker) | τ²-Bench | **3/3 · 100%** | ✅ #1 globally |
-| [purple-agent-business-process-worker](https://github.com/abhishec/purple-agent-business-process-worker) | CRMArenaPro | Run 5 in progress (baseline: 20.7%) | 🔄 In progress |
+| [purple-agent-business-process-worker](https://github.com/abhishec/purple-agent-business-process-worker) | CRMArenaPro | Run 8 in progress · 2140 tasks · 22 categories | 🔄 In progress |
 | [purple-agent-finance-worker](https://github.com/abhishec/purple-agent-finance-worker) | OfficeQA | **246/246 · 100%** | ✅ #1 globally |
 | [purple-agent-web-worker](https://github.com/abhishec/purple-agent-web-worker) | WebShop+ | claude-sonnet-4-6 · DAAO + contracts | 🚀 Deployed |
 | [purple-agent-research-worker](https://github.com/abhishec/purple-agent-research-worker) | ResearchToolBench | claude-sonnet-4-6 · DAAO + contracts | 🚀 Deployed |
